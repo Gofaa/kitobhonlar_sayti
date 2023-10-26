@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}   {% endblock %}
+{% block content %}
+    <div class="card mb-3" style="max-width: 700px;">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="{{ book.book_image.url }}" class="img-fluid rounded-start" alt="...">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title">{{ book.title }}</h5>
+                    <span class="fst-italic">
+                Authored by
+                        {% for book_author in book.bookauthor_set.all %}
+
+                            {% if forloop.last %}
+                                <a href="{% url 'books:about_author' book_author.id %}">{{ book_author.author.full_name }}</a>
+                            {% else %}
+                                <a href="{% url 'books:about_author' book_author.id %}">{{ book_author.author.full_name }},</a>
+                            {% endif %}
+
+                        {% endfor %}
+            </span>
+                    <p class="card-text">{{ book.description }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if request.user.is_authenticated %}
+        <div class="row">
+            <div class="col-3">
+                <form method="post" action="{% url 'books:review' book.id %}"> {% csrf_token %}
+                    {{ book_review | crispy }}
+                    <button type="submit" class="btn btn-primary">submit</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+    {% if reviews.exists %}
+        <h4>Reviews</h4>
+        <hr>
+        {% for review in reviews %}
+            <div class="row mb-5">
+                <div class="col-7 comment">
+                    {% if review.user.is_staff == True %}
+                        <b>{{ review.user.username }} (superuser)</b> rated in {{ review.stars_given }} stars
+                    {% else %}
+                        <b><a href="{% url 'books:user_detail' review.user.username %}">{{ review.user.username }}</a></b> rated in
+                        {{ review.stars_given }} stars <span
+                            class="fw-lighter">{{ review.created_at }}</span>
+                    {% endif %}
+                    {% if review.user == request.user %}
+                        <span class="me-2"><a href="{% url 'books:delete-review' book.id review.id %}"><i
+                                class="bi bi-trash3"></i></a></span>
+                        <span><a href="{% url 'books:edit-review' book.id review.id %}"><i
+                                class="bi bi-pen"></i></a></span>
+                    {% endif %}
+                    <p>{{ review.comment }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
